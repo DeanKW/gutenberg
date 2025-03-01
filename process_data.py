@@ -65,6 +65,14 @@ if __name__ == '__main__':
         help="Path to log file",
         default=".log",
         type=str)
+    
+    # re-process everything
+    parser.add_argument(
+        "--reprocess",
+        action="store_true",
+        help="Should all books be reprocessed, over-writing progress",
+        default=False
+    )
 
     # add arguments to parser
     args = parser.parse_args()
@@ -91,21 +99,24 @@ if __name__ == '__main__':
 
     book_list = list(glob.glob(join(args.raw, 'PG%s_raw.txt' % (args.pattern))))
 
-    books_not_parsed = []
-    for book in book_list:
-        filename = os.path.basename(item).split('_')[0]
-        token_path = os.path.join('data', 'tokens', filename + '_tokens.txt')
-        count_path = os.path.join('data', 'counts', filename + '_counts.txt')
-        text_path = os.path.join('data', 'text', filename + '_text.txt')
+    if args.reprocess is False:
+        books_to_parse = []
+        for book in book_list:
+            filename = os.path.basename(item).split('_')[0]
+            token_path = os.path.join('data', 'tokens', filename + '_tokens.txt')
+            count_path = os.path.join('data', 'counts', filename + '_counts.txt')
+            text_path = os.path.join('data', 'text', filename + '_text.txt')
 
-        already_done = os.path.exists(token_path) and os.path.exists(count_path) and os.path.exists(text_path)
-        if not already_done:
-            books_not_parsed.append(book)
+            already_done = os.path.exists(token_path) and os.path.exists(count_path) and os.path.exists(text_path)
+            if not already_done:
+                books_to_parse.append(book)
+    else:
+        books_to_parse=book_list
 
     print(f"Total downloaded book count: {len(book_list)}")
-    print(f"Books already processed: {len(book_list) - len(books_not_parsed)}")
-    print(f"Books to process: {len(books_not_parsed)}")
-    for filename in books_not_parsed:
+    print(f"Books already processed: {len(book_list) - len(books_to_parse)}")
+    print(f"Books to process: {len(books_to_parse)}")
+    for filename in books_to_parse:
         # The process_books function will fail very rarely, whne
         # a file tagged as UTf-8 is not really UTF-8. We kust
         # skip those books.
