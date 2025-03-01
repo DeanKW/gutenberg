@@ -88,7 +88,24 @@ if __name__ == '__main__':
 
     # loop over all books in the raw-folder
     pbooks = 0
-    for filename in glob.glob(join(args.raw, 'PG%s_raw.txt' % (args.pattern))):
+
+    book_list = list(glob.glob(join(args.raw, 'PG%s_raw.txt' % (args.pattern))))
+
+    books_not_parsed = []
+    for book in book_list:
+        filename = os.path.basename(item).split('_')[0]
+        token_path = os.path.join('data', 'tokens', filename + '_tokens.txt')
+        count_path = os.path.join('data', 'counts', filename + '_counts.txt')
+        text_path = os.path.join('data', 'text', filename + '_text.txt')
+
+        already_done = os.path.exists(token_path) and os.path.exists(count_path) and os.path.exists(text_path)
+        if not already_done:
+            books_not_parsed.append(book)
+
+    print(f"Total downloaded book count: {len(book_list)}")
+    print(f"Books already processed: {len(book_list) - len(books_not_parsed)}")
+    print(f"Books to process: {len(books_not_parsed)}")
+    for filename in books_not_parsed:
         # The process_books function will fail very rarely, whne
         # a file tagged as UTf-8 is not really UTF-8. We kust
         # skip those books.
