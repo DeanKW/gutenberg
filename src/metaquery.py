@@ -22,11 +22,11 @@ class meta_query(object):
         '''filter_exist: Only keep entries in metadata for which we have the downloaded text.
         '''
 
+        self._path_text = os.path.abspath(os.path.join(path,os.pardir,os.pardir,'data','text'))
         self.df = pd.read_csv(path) ## the dataframe on which we apply filters
         if filter_exist == True: ## filter the books for which we have the data
-            path_text = os.path.abspath(os.path.join(path,os.pardir,os.pardir,'data','text'))
             list_files = []
-            for file in list(glob.glob( path_text+'/PG*_text.txt' )):
+            for file in list(glob.glob( self._path_text+'/PG*_text.txt' )):
                 list_files += [file]
             list_ids = sorted([ h.split('/')[-1].split('_text')[0] for h in list_files ])
             df = self.df
@@ -136,6 +136,17 @@ class meta_query(object):
             s=s.iloc[:n]
         self.df = s
 
+    ### Read each text to find the number of lines
+    def get_line_counts(self):
+        def _get_line_count_single_book(pg_id):
+            file_path = os.path.join(self._path_text, f'{pg_id}_text.txt')
+            with open(file_path) as f:
+                book_text = f.readlines()
+
+            num_lines = len(book_text)
+            return num_lines
+
+        self.df['num_lines'] = self.df['id'].apply(lambda x: _get_line_count_single_book(x))
 
 
 
