@@ -21,8 +21,8 @@ class meta_query(object):
     def __init__(self, path='../metadata/metadata.csv', filter_exist=True):
         '''filter_exist: Only keep entries in metadata for which we have the downloaded text.
         '''
-
         self._path_text = os.path.abspath(os.path.join(path,os.pardir,os.pardir,'data','text'))
+
         self.df = pd.read_csv(path) ## the dataframe on which we apply filters
         if filter_exist == True: ## filter the books for which we have the data
             list_files = []
@@ -33,6 +33,10 @@ class meta_query(object):
             df_new = df[df['id'].isin(list_ids)]
             self.df = df_new
         self.df_original = self.df ## keep the original dataframe
+
+        # Create a list of languages
+        # Yes, this is duplicate information, but keeping it for now
+        self.df['language_set'] = self.df['language'].apply(self._make_language_set)
 
     def reset(self):
         '''reset df to original dataframe (remove all filters)
@@ -81,6 +85,25 @@ class meta_query(object):
         list_lang = [[k for k in h.strip("[]")[1:-1].replace("', '","_").split('_')] for h in self.df['language'].dropna()]
         list_lang_flat = [item for sublist in list_lang for item in sublist]
         return Counter(list_lang_flat)
+
+    def _make_language_set(self, lang):
+        """Converts a single language entry that was a string into a set of languages
+
+        # May consider having this be an optional call by the user
+        For example:
+            * the string "['en']" gets converted to a list (of length one) of strings ['en']
+            * the string "['en', 'brx']" gets converted to a list (of length two) of strings ['en', 'brx']
+
+        """
+        if not isinstance(lang, str):
+            print(f'WARNING: Language {lang} is not a string')
+            return lang
+
+        # Removes the brackets first, then the internal quotes.  Finally, remove white space, then split
+        lang = set(lang.strip('[]').replace("'", "").replace(" ","").split(','))
+
+        return lang
+
     ### SUBJECTS
     def get_subjects(self):
         list_subjects = [[k for k in h.strip("{}")[1:-1].replace("', '","_").split('_')] for h in self.df['subjects'].replace('set()',np.nan).dropna()]
@@ -137,7 +160,7 @@ class meta_query(object):
         self.df = s
 
     ### Read each text to find the number of lines
-    def get_line_counts(self):
+    def add_line_count(self):
         def _get_line_count_single_book(pg_id):
             file_path = os.path.join(self._path_text, f'{pg_id}_text.txt')
             with open(file_path) as f:
@@ -147,6 +170,3 @@ class meta_query(object):
             return num_lines
 
         self.df['num_lines'] = self.df['id'].apply(lambda x: _get_line_count_single_book(x))
-
-
-
