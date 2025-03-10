@@ -102,7 +102,7 @@ if __name__ == '__main__':
     if args.reprocess is False:
         books_to_parse = []
         for book in book_list:
-            filename = os.path.basename(item).split('_')[0]
+            filename = os.path.basename(book).split('_')[0]
             token_path = os.path.join('data', 'tokens', filename + '_tokens.txt')
             count_path = os.path.join('data', 'counts', filename + '_counts.txt')
             text_path = os.path.join('data', 'text', filename + '_text.txt')
